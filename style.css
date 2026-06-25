@@ -1,0 +1,237 @@
+/* ===========================================================
+   RESET & BASE STYLE
+   =========================================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f2f4f7;
+  color: #1a1a1a;
+  padding-bottom: 30px;
+}
+
+/* ===========================================================
+   HEADER
+   =========================================================== */
+.app-header {
+  background-color: #1f4e79; /* Biru tua, kesan industrial/gudang */
+  color: #ffffff;
+  padding: 16px 20px;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.app-header h1 {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+/* ===========================================================
+   CONTAINER UTAMA
+   =========================================================== */
+.app-container {
+  max-width: 480px; /* Dibatasi agar nyaman dilihat di HP */
+  margin: 0 auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ===========================================================
+   CARD UMUM (Kamera, Hasil, Status, Riwayat)
+   =========================================================== */
+.card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.card h2 {
+  font-size: 1rem;
+  margin-bottom: 12px;
+  color: #1f4e79;
+  border-left: 4px solid #1f4e79;
+  padding-left: 8px;
+}
+
+/* ===========================================================
+   AREA KAMERA
+   =========================================================== */
+#reader {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #000; /* Latar hitam sebelum kamera aktif */
+  min-height: 250px;
+}
+
+.camera-controls {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.btn {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.btn:active {
+  opacity: 0.8;
+}
+
+.btn:disabled {
+  background-color: #cfd4da !important;
+  color: #6b7280 !important;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: #1f4e79;
+  color: #ffffff;
+}
+
+.btn-secondary {
+  background-color: #e74c3c;
+  color: #ffffff;
+}
+
+/* ===========================================================
+   AREA HASIL SCAN
+   =========================================================== */
+.result-box {
+  margin-bottom: 10px;
+}
+
+.result-box .label {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.resi-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  word-break: break-all; /* Agar nomor resi panjang tidak overflow */
+  color: #1a1a1a;
+}
+
+/* ===========================================================
+   AREA STATUS (Valid / Duplicate / Idle / Loading)
+   =========================================================== */
+.status-box {
+  padding: 16px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1rem;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Status default sebelum ada scan */
+.status-idle {
+  background-color: #eef0f3;
+  color: #6b7280;
+}
+
+/* Status saat sedang mengecek ke Google Sheets */
+.status-loading {
+  background-color: #fff7e6;
+  color: #b8860b;
+}
+
+/* Status sukses - resi valid (belum pernah discan) */
+.status-valid {
+  background-color: #e3f9e5;
+  color: #1c7c30;
+  border: 2px solid #2ecc71;
+}
+
+/* Status gagal - resi sudah pernah discan / duplicate */
+.status-duplicate {
+  background-color: #fdecea;
+  color: #c0392b;
+  border: 2px solid #e74c3c;
+}
+
+/* Status error - koneksi/server gagal */
+.status-error {
+  background-color: #fdecea;
+  color: #c0392b;
+  border: 2px dashed #e74c3c;
+}
+
+/* ===========================================================
+   AREA RIWAYAT SCAN
+   =========================================================== */
+.history-list {
+  list-style: none;
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.history-list li {
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background-color: #f7f8fa;
+  border-left: 4px solid #cfd4da;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.history-list li.history-valid {
+  border-left-color: #2ecc71;
+}
+
+.history-list li.history-duplicate {
+  border-left-color: #e74c3c;
+}
+
+.history-list .h-time {
+  color: #6b7280;
+  white-space: nowrap;
+  font-size: 0.75rem;
+}
+
+/* ===========================================================
+   FOOTER
+   =========================================================== */
+.app-footer {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #9aa0a6;
+  margin-top: 20px;
+}
+
+/* ===========================================================
+   RESPONSIVE - Tambahan untuk layar sangat kecil
+   =========================================================== */
+@media (max-width: 360px) {
+  .app-header h1 {
+    font-size: 1rem;
+  }
+
+  .btn {
+    font-size: 0.85rem;
+    padding: 10px;
+  }
+}
