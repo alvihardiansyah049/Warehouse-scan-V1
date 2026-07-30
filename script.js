@@ -18,7 +18,7 @@ const COURIER_PREFIXES = [
   { prefix: "SPX",   name: "Shopee Express" },
   { prefix: "WHID",  name: "Wahana" },
   { prefix: "WHE",   name: "Wahana" },
-  { prefix: "JNT",   name: "J&T Express" },
+  { prefix: "JY",   name: "J&T Express" },
   { prefix: "JX",    name: "J&T Express" },
   { prefix: "NJV",   name: "Ninja Xpress" },
   { prefix: "ANT",   name: "Anteraja" },
