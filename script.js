@@ -1,7 +1,7 @@
 /* ===========================================================
    KONFIGURASI — ganti URL dengan milik kamu
    =========================================================== */
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbylbCjRrKdTP75A8wm_FE-4mtry-XuWGonzJX4okuG8HbPtuQN-UMAw0VznXxmt-mwQ/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyeHLqTN_L6A6ZLft1t33_yu5f9EQ1ZX3XFH-M5vmmVFvURSnJI6BVYMXks20JYfBrS/exec";
 
 const SCAN_COOLDOWN_MS = 3000;
 
@@ -18,7 +18,7 @@ const COURIER_PREFIXES = [
   { prefix: "SPX",   name: "Shopee Express" },
   { prefix: "WHID",  name: "Wahana" },
   { prefix: "WHE",   name: "Wahana" },
-  { prefix: "JY",   name: "J&T Express" },
+  { prefix: "JNT",   name: "J&T Express" },
   { prefix: "JX",    name: "J&T Express" },
   { prefix: "NJV",   name: "Ninja Xpress" },
   { prefix: "ANT",   name: "Anteraja" },
