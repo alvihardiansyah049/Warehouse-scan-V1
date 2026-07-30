@@ -1,7 +1,7 @@
 /* ===========================================================
    KONFIGURASI — ganti URL dengan milik kamu
    =========================================================== */
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzauinKu_WmUfeyXpidFHjCWVyPa9s74z6uWczZ3a2iVcbhFY2U4bHL2-M9g5tgkFVF/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbylbCjRrKdTP75A8wm_FE-4mtry-XuWGonzJX4okuG8HbPtuQN-UMAw0VznXxmt-mwQ/exec";
 
 const SCAN_COOLDOWN_MS = 3000;
 
