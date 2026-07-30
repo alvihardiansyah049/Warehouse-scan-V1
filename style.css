@@ -1,6 +1,3 @@
-/* =====================================================
-   RESET & BASE
-   ===================================================== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
@@ -10,115 +7,10 @@ body {
   min-height: 100vh;
 }
 
-/* =====================================================
-   HALAMAN LOGIN
-   ===================================================== */
-.login-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #1f4e79 0%, #2e86c1 100%);
-  padding: 20px;
-}
-
-.login-card {
-  background: #fff;
-  border-radius: 20px;
-  padding: 36px 28px;
-  width: 100%;
-  max-width: 360px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-  text-align: center;
-}
-
-.login-logo {
-  font-size: 3rem;
-  margin-bottom: 8px;
-}
-
-.login-title {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: #1f4e79;
-  margin-bottom: 4px;
-}
-
-.login-sub {
-  font-size: 0.85rem;
-  color: #6b7280;
-  margin-bottom: 24px;
-}
-
-.input-group {
-  text-align: left;
-  margin-bottom: 14px;
-}
-
-.input-group label {
-  display: block;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 5px;
-}
-
-.input-group input {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1.5px solid #d1d5db;
-  border-radius: 10px;
-  font-size: 0.95rem;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.input-group input:focus {
-  border-color: #2e86c1;
-}
-
-.login-error {
-  background: #fdecea;
-  color: #c0392b;
-  font-size: 0.82rem;
-  padding: 8px 12px;
-  border-radius: 8px;
-  margin-bottom: 12px;
-}
-
-.btn-login {
-  width: 100%;
-  padding: 14px;
-  background: #1f4e79;
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  font-size: 1rem;
-  font-weight: 700;
-  cursor: pointer;
-  margin-top: 8px;
-  transition: background 0.2s;
-}
-
-.btn-login:active { background: #163d5e; }
-
-/* =====================================================
-   HALAMAN UTAMA
-   ===================================================== */
-.main-page {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-/* HEADER */
 .app-header {
   background: #1f4e79;
   color: #fff;
   padding: 14px 18px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   font-weight: 600;
   font-size: 1rem;
   position: sticky;
@@ -127,17 +19,6 @@ body {
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
-.btn-logout {
-  background: rgba(255,255,255,0.15);
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.3);
-  border-radius: 8px;
-  padding: 6px 12px;
-  font-size: 0.8rem;
-  cursor: pointer;
-}
-
-/* CONTAINER */
 .app-container {
   max-width: 480px;
   margin: 0 auto;
@@ -148,64 +29,24 @@ body {
   padding-bottom: 30px;
 }
 
-/* =====================================================
-   STATUS BOX BESAR (mirip gambar — dominan di atas)
-   ===================================================== */
+/* STATUS BOX */
 .status-box {
   border-radius: 16px;
   padding: 24px 20px;
   text-align: center;
   transition: all 0.25s ease;
 }
+.status-icon { font-size: 2.2rem; margin-bottom: 6px; }
+.status-text { font-size: 1.4rem; font-weight: 800; }
+.status-resi { font-size: 0.85rem; margin-top: 6px; opacity: 0.85; word-break: break-all; }
 
-.status-icon {
-  font-size: 2.2rem;
-  margin-bottom: 6px;
-}
+.status-idle      { background: #e8edf2; color: #4b5563; }
+.status-loading   { background: #fef3c7; color: #92610a; }
+.status-valid     { background: #00b050; color: #fff; }
+.status-duplicate { background: #e74c3c; color: #fff; }
+.status-error     { background: #fdecea; color: #c0392b; border: 2px dashed #e74c3c; }
 
-.status-text {
-  font-size: 1.4rem;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-}
-
-.status-resi {
-  font-size: 0.85rem;
-  margin-top: 6px;
-  opacity: 0.85;
-  word-break: break-all;
-}
-
-/* Warna status */
-.status-idle {
-  background: #e8edf2;
-  color: #4b5563;
-}
-
-.status-loading {
-  background: #fef3c7;
-  color: #92610a;
-}
-
-.status-valid {
-  background: #00b050; /* hijau terang seperti di gambar */
-  color: #ffffff;
-}
-
-.status-duplicate {
-  background: #e74c3c;
-  color: #ffffff;
-}
-
-.status-error {
-  background: #fdecea;
-  color: #c0392b;
-  border: 2px dashed #e74c3c;
-}
-
-/* =====================================================
-   CARD UMUM
-   ===================================================== */
+/* CARD */
 .card {
   background: #fff;
   border-radius: 14px;
@@ -213,9 +54,7 @@ body {
   box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
 
-/* =====================================================
-   KAMERA
-   ===================================================== */
+/* KAMERA */
 #reader {
   width: 100%;
   border-radius: 10px;
@@ -223,10 +62,6 @@ body {
   background: #000;
   min-height: 230px;
 }
-
-/* Sembunyikan elemen bawaan html5-qrcode yang tidak perlu */
-#reader__dashboard_section_swaplink,
-#reader__filescan_input { display: none !important; }
 
 .camera-controls {
   display: flex;
@@ -244,53 +79,19 @@ body {
   cursor: pointer;
   transition: opacity 0.15s;
 }
+.btn:active   { opacity: 0.75; }
+.btn:disabled { background: #e5e7eb !important; color: #9ca3af !important; cursor: not-allowed; }
+.btn-primary  { background: #1f4e79; color: #fff; }
+.btn-danger   { background: #e74c3c; color: #fff; }
 
-.btn:active { opacity: 0.75; }
-
-.btn:disabled {
-  background: #e5e7eb !important;
-  color: #9ca3af !important;
-  cursor: not-allowed;
-}
-
-.btn-primary { background: #1f4e79; color: #fff; }
-.btn-danger  { background: #e74c3c; color: #fff; }
-
-/* =====================================================
-   INFO HASIL SCAN
-   ===================================================== */
+/* INFO */
 .info-card { padding: 6px 14px; }
+.info-row  { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; }
+.info-label { font-size: 0.8rem; color: #6b7280; font-weight: 500; }
+.info-value { font-size: 0.9rem; font-weight: 700; color: #111; text-align: right; word-break: break-all; max-width: 65%; }
+.info-divider { height: 1px; background: #f3f4f6; }
 
-.info-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 11px 0;
-}
-
-.info-label {
-  font-size: 0.8rem;
-  color: #6b7280;
-  font-weight: 500;
-}
-
-.info-value {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: #111;
-  text-align: right;
-  word-break: break-all;
-  max-width: 65%;
-}
-
-.info-divider {
-  height: 1px;
-  background: #f3f4f6;
-}
-
-/* =====================================================
-   RIWAYAT SCAN
-   ===================================================== */
+/* RIWAYAT */
 .section-title {
   font-size: 0.8rem;
   font-weight: 700;
@@ -321,29 +122,12 @@ body {
   gap: 8px;
 }
 
-.history-list li.h-valid   { border-left-color: #00b050; }
+.history-list li.h-valid     { border-left-color: #00b050; }
 .history-list li.h-duplicate { border-left-color: #e74c3c; }
 
-.h-resi {
-  font-weight: 700;
-  flex: 1;
-  word-break: break-all;
-}
+.h-resi { font-weight: 700; flex: 1; word-break: break-all; }
+.h-time { font-size: 0.72rem; color: #9ca3af; white-space: nowrap; }
 
-.h-courier {
-  font-size: 0.75rem;
-  color: #6b7280;
-}
-
-.h-time {
-  font-size: 0.72rem;
-  color: #9ca3af;
-  white-space: nowrap;
-}
-
-/* =====================================================
-   RESPONSIVE
-   ===================================================== */
 @media (max-width: 360px) {
   .status-text { font-size: 1.2rem; }
   .btn { font-size: 0.82rem; padding: 11px; }
