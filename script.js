@@ -2,23 +2,19 @@
    KONFIGURASI
    =========================================================== */
 
-// GANTI URL ini dengan URL Web App hasil deploy Google Apps Script kamu
-// Cara mendapatkan URL ini ada di panduan (README) yang disertakan
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydeV2Jp4RdzujD3V0OYQTACD9Z5OSzgIx-W07uoxVjlUCyfAfqscMt3RMKJTr5XCU/exec";
 
-// Jeda minimum (ms) sebelum boleh scan barcode yang SAMA lagi.
-// Ini mencegah kamera membaca ulang barcode yang sama berkali-kali
-// dalam waktu singkat saat barcode masih ada di depan kamera.
 const SCAN_COOLDOWN_MS = 3000;
 
 /* ===========================================================
    VARIABEL GLOBAL
    =========================================================== */
 
-let html5QrCode = null;       // Instance scanner dari library html5-qrcode
-let isProcessing = false;     // Flag: true saat sedang proses cek ke Google Sheets
-let lastScannedCode = null;   // Menyimpan kode terakhir yang discan
-let lastScannedTime = 0;      // Menyimpan waktu (timestamp) scan terakhir
+let html5QrCode = null;
+let isProcessing = false;
+let lastScannedCode = null;
+let lastScannedTime = 0;
+let audioCtx = null; // AudioContext disimpan global agar bisa di-unlock sekali
 
 /* ===========================================================
    AMBIL ELEMEN-ELEMEN HTML YANG DIBUTUHKAN
@@ -32,68 +28,64 @@ const statusBox = document.getElementById("statusBox");
 const historyList = document.getElementById("historyList");
 
 /* ===========================================================
-   FUNGSI SUARA BIP (Web Audio API - built-in browser, tanpa file audio)
+   FUNGSI SUARA BIP (Web Audio API)
    =========================================================== */
 
 // Bip 1x nada TINGGI = resi valid
 function bipValid() {
   try {
-    const ctx  = new (window.AudioContext || window.webkitAudioContext)();
-    const osc  = ctx.createOscillator();
-    const gain = ctx.createGain();
+    const osc  = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
     osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.frequency.value = 1000; // Hz - nada tinggi
-    gain.gain.setValueAtTime(0.3, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.15);
-  } catch (e) {
-    // Abaikan jika browser tidak support
-  }
+    gain.connect(audioCtx.destination);
+    osc.frequency.value = 1000;
+    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.15);
+  } catch (e) {}
 }
 
 // Bip 2x nada RENDAH = resi duplicate
 function bipDuplicate() {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
     [0, 0.22].forEach((delay) => {
-      const osc  = ctx.createOscillator();
-      const gain = ctx.createGain();
+      const osc  = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
       osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.value = 380; // Hz - nada rendah
-      gain.gain.setValueAtTime(0.3, ctx.currentTime + delay);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.18);
-      osc.start(ctx.currentTime + delay);
-      osc.stop(ctx.currentTime + delay + 0.18);
+      gain.connect(audioCtx.destination);
+      osc.frequency.value = 380;
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime + delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + 0.18);
+      osc.start(audioCtx.currentTime + delay);
+      osc.stop(audioCtx.currentTime + delay + 0.18);
     });
-  } catch (e) {
-    // Abaikan jika browser tidak support
-  }
+  } catch (e) {}
 }
 
 /* ===========================================================
    FUNGSI: MULAI KAMERA SCANNER
    =========================================================== */
 function startScanner() {
-  // Buat instance scanner, "reader" adalah id div tempat video kamera ditampilkan
+  // Unlock Web Audio API saat user tap - wajib ada interaksi user dulu
+  // sebelum browser mobile mengizinkan suara keluar
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  audioCtx.resume();
+
   html5QrCode = new Html5Qrcode("reader");
 
-  // Konfigurasi area kotak pemindaian (qrbox) dan FPS kamera
   const config = {
-    fps: 10,                 // Frame per second untuk proses scan
-    qrbox: { width: 250, height: 150 }, // Ukuran kotak fokus pemindaian
+    fps: 10,
+    qrbox: { width: 250, height: 150 },
     aspectRatio: 1.0,
   };
 
-  // Gunakan kamera belakang (environment) karena ini perangkat HP untuk scan barcode
   html5QrCode
     .start(
       { facingMode: "environment" },
       config,
-      onScanSuccess,   // Callback dipanggil otomatis saat barcode terbaca
-      onScanFailure    // Callback dipanggil saat frame gagal dibaca (boleh diabaikan)
+      onScanSuccess,
+      onScanFailure
     )
     .then(() => {
       btnStart.disabled = true;
@@ -129,9 +121,6 @@ function stopScanner() {
 function onScanSuccess(decodedText) {
   const now = Date.now();
 
-  // ---- ANTI DOUBLE SCAN (level kamera/frontend) ----
-  // Jika kode yang sama discan ulang dalam waktu cooldown, abaikan saja.
-  // Ini mencegah 1 barcode yang sama terbaca berkali-kali saat masih di depan kamera.
   if (
     isProcessing ||
     (decodedText === lastScannedCode && now - lastScannedTime < SCAN_COOLDOWN_MS)
@@ -142,41 +131,29 @@ function onScanSuccess(decodedText) {
   lastScannedCode = decodedText;
   lastScannedTime = now;
 
-  // Langsung proses tanpa perlu klik tombol apapun
   processResi(decodedText);
 }
 
 /* ===========================================================
-   CALLBACK: DIPANGGIL SAAT FRAME GAGAL DIBACA (NORMAL, BOLEH DIABAIKAN)
+   CALLBACK: FRAME GAGAL DIBACA - NORMAL, DIABAIKAN
    =========================================================== */
-function onScanFailure(error) {
-  // Tidak perlu ditampilkan ke user, ini terjadi terus-menerus
-  // setiap frame yang belum menemukan barcode. Cukup diabaikan.
-}
+function onScanFailure(error) {}
 
 /* ===========================================================
    FUNGSI: PROSES NOMOR RESI YANG TERBACA
-   - Tampilkan ke UI
-   - Cek ke Google Sheets apakah sudah pernah discan
-   - Tampilkan status sesuai hasil
    =========================================================== */
 async function processResi(noResi) {
   isProcessing = true;
 
-  // Tampilkan dulu nomor resi yang terbaca ke area "Hasil Scan"
   resiText.textContent = noResi;
   const waktuSekarang = formatWaktu(new Date());
   scanTime.textContent = waktuSekarang;
 
-  // Tampilkan status loading sementara proses pengecekan berjalan
   setStatus("loading", "⏳ Mengecek nomor resi...");
 
   try {
-    // Kirim request ke Google Apps Script untuk cek + simpan data
     const response = await fetch(APPS_SCRIPT_URL, {
       method: "POST",
-      // Gunakan text/plain agar request tidak memicu CORS preflight,
-      // karena Apps Script Web App tidak menangani preflight OPTIONS dengan baik.
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({
         action: "checkAndSave",
@@ -188,19 +165,16 @@ async function processResi(noResi) {
     const result = await response.json();
 
     if (result.status === "valid") {
-      // Resi belum pernah discan -> sudah disimpan oleh Apps Script
       setStatus("valid", "✅ Resi Valid");
       addHistory(noResi, waktuSekarang, "valid");
       bipValid();       // 🔊 Bip 1x nada tinggi
 
     } else if (result.status === "duplicate") {
-      // Resi sudah ada sebelumnya -> tidak disimpan ulang
       setStatus("duplicate", "⚠️ Resi Sudah Pernah Discan");
       addHistory(noResi, waktuSekarang, "duplicate");
       bipDuplicate();   // 🔊 Bip 2x nada rendah
 
     } else {
-      // Status tidak dikenali dari server
       setStatus("error", "❌ Respon server tidak dikenali.");
     }
   } catch (err) {
@@ -212,16 +186,15 @@ async function processResi(noResi) {
 }
 
 /* ===========================================================
-   FUNGSI: UBAH TAMPILAN STATUS BOX (idle/loading/valid/duplicate/error)
+   FUNGSI: UBAH TAMPILAN STATUS BOX
    =========================================================== */
 function setStatus(type, message) {
-  // Hapus semua class status sebelumnya, lalu pasang class baru sesuai tipe
   statusBox.className = "status-box status-" + type;
   statusBox.textContent = message;
 }
 
 /* ===========================================================
-   FUNGSI: TAMBAHKAN ITEM KE RIWAYAT SCAN (HANYA TAMPILAN LOKAL)
+   FUNGSI: TAMBAHKAN ITEM KE RIWAYAT SCAN
    =========================================================== */
 function addHistory(noResi, waktu, type) {
   const li = document.createElement("li");
@@ -234,12 +207,11 @@ function addHistory(noResi, waktu, type) {
     <span class="h-time">${waktu}</span>
   `;
 
-  // Tambahkan riwayat baru di paling atas list
   historyList.prepend(li);
 }
 
 /* ===========================================================
-   FUNGSI BANTUAN: FORMAT WAKTU MENJADI STRING YANG MUDAH DIBACA
+   FUNGSI BANTUAN: FORMAT WAKTU
    =========================================================== */
 function formatWaktu(dateObj) {
   const pad = (n) => String(n).padStart(2, "0");
@@ -249,7 +221,7 @@ function formatWaktu(dateObj) {
 }
 
 /* ===========================================================
-   FUNGSI BANTUAN: MENCEGAH INJEKSI HTML SAAT MENAMPILKAN NOMOR RESI
+   FUNGSI BANTUAN: ESCAPE HTML
    =========================================================== */
 function escapeHtml(text) {
   const div = document.createElement("div");
@@ -263,14 +235,7 @@ function escapeHtml(text) {
 btnStart.addEventListener("click", startScanner);
 btnStop.addEventListener("click", stopScanner);
 
-/* ===========================================================
-   AUTO START KAMERA SAAT HALAMAN DIBUKA (opsional)
-   Jika tidak mau auto start, hapus/komentari baris di bawah ini
-   dan user harus klik tombol "Mulai Kamera" secara manual.
-   =========================================================== */
 window.addEventListener("DOMContentLoaded", () => {
-  // Dikomentari secara default supaya user yang menentukan kapan kamera aktif
-  // (lebih aman dari sisi privasi & sesuai kebiasaan aplikasi gudang).
   // Hapus tanda komentar di baris bawah jika ingin auto-start:
   // startScanner();
 });
