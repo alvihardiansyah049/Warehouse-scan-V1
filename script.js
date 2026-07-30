@@ -32,6 +32,48 @@ const statusBox = document.getElementById("statusBox");
 const historyList = document.getElementById("historyList");
 
 /* ===========================================================
+   FUNGSI SUARA BIP (Web Audio API - built-in browser, tanpa file audio)
+   =========================================================== */
+
+// Bip 1x nada TINGGI = resi valid
+function bipValid() {
+  try {
+    const ctx  = new (window.AudioContext || window.webkitAudioContext)();
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 1000; // Hz - nada tinggi
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.15);
+  } catch (e) {
+    // Abaikan jika browser tidak support
+  }
+}
+
+// Bip 2x nada RENDAH = resi duplicate
+function bipDuplicate() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [0, 0.22].forEach((delay) => {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 380; // Hz - nada rendah
+      gain.gain.setValueAtTime(0.3, ctx.currentTime + delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.18);
+      osc.start(ctx.currentTime + delay);
+      osc.stop(ctx.currentTime + delay + 0.18);
+    });
+  } catch (e) {
+    // Abaikan jika browser tidak support
+  }
+}
+
+/* ===========================================================
    FUNGSI: MULAI KAMERA SCANNER
    =========================================================== */
 function startScanner() {
@@ -149,10 +191,14 @@ async function processResi(noResi) {
       // Resi belum pernah discan -> sudah disimpan oleh Apps Script
       setStatus("valid", "✅ Resi Valid");
       addHistory(noResi, waktuSekarang, "valid");
+      bipValid();       // 🔊 Bip 1x nada tinggi
+
     } else if (result.status === "duplicate") {
       // Resi sudah ada sebelumnya -> tidak disimpan ulang
       setStatus("duplicate", "⚠️ Resi Sudah Pernah Discan");
       addHistory(noResi, waktuSekarang, "duplicate");
+      bipDuplicate();   // 🔊 Bip 2x nada rendah
+
     } else {
       // Status tidak dikenali dari server
       setStatus("error", "❌ Respon server tidak dikenali.");
