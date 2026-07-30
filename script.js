@@ -1,155 +1,237 @@
 /* ===========================================================
-   KONFIGURASI
+   KONFIGURASI — ganti URL dengan milik kamu
    =========================================================== */
-
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydeV2Jp4RdzujD3V0OYQTACD9Z5OSzgIx-W07uoxVjlUCyfAfqscMt3RMKJTr5XCU/exec";
 
 const SCAN_COOLDOWN_MS = 3000;
 
+// Kredensial login (bisa diubah sesuai kebutuhan)
+const VALID_USER = "admin";
+const VALID_PASS = "admin";
+
+/* ===========================================================
+   DAFTAR PREFIX KURIR
+   Urutan: prefix lebih panjang/spesifik duluan
+   =========================================================== */
+const COURIER_PREFIXES = [
+  { prefix: "SPXID", name: "Shopee Express" },
+  { prefix: "SPX",   name: "Shopee Express" },
+  { prefix: "WHID",  name: "Wahana" },
+  { prefix: "WHE",   name: "Wahana" },
+  { prefix: "JNT",   name: "J&T Express" },
+  { prefix: "JX",    name: "J&T Express" },
+  { prefix: "NJV",   name: "Ninja Xpress" },
+  { prefix: "ANT",   name: "Anteraja" },
+  { prefix: "TKP",   name: "Tiki" },
+  { prefix: "AWB",   name: "SiCepat" },
+  { prefix: "GE",    name: "SiCepat" },
+  { prefix: "TG",    name: "JNE" },
+  { prefix: "JD",    name: "JNE" },
+  { prefix: "CM",    name: "JNE" },
+  { prefix: "LP",    name: "LION Parcel" },
+  { prefix: "FX",    name: "First Logistics" },
+  { prefix: "POS",   name: "Pos Indonesia" },
+  { prefix: "RZ",    name: "RPX" },
+  { prefix: "DP",    name: "Anteraja" },
+];
+
 /* ===========================================================
    VARIABEL GLOBAL
    =========================================================== */
-
-let html5QrCode = null;
-let isProcessing = false;
+let html5QrCode    = null;
+let isProcessing   = false;
 let lastScannedCode = null;
 let lastScannedTime = 0;
-let audioCtx = null; // AudioContext disimpan global agar bisa di-unlock sekali
+let audioCtx       = null;
 
 /* ===========================================================
-   AMBIL ELEMEN-ELEMEN HTML YANG DIBUTUHKAN
+   ELEMEN HTML
    =========================================================== */
+// Login
+const loginPage  = document.getElementById("loginPage");
+const mainPage   = document.getElementById("mainPage");
+const inputUser  = document.getElementById("inputUser");
+const inputPass  = document.getElementById("inputPass");
+const btnLogin   = document.getElementById("btnLogin");
+const loginError = document.getElementById("loginError");
+const btnLogout  = document.getElementById("btnLogout");
 
-const btnStart = document.getElementById("btnStart");
-const btnStop = document.getElementById("btnStop");
-const resiText = document.getElementById("resiText");
-const scanTime = document.getElementById("scanTime");
-const statusBox = document.getElementById("statusBox");
+// Scan
+const btnStart    = document.getElementById("btnStart");
+const btnStop     = document.getElementById("btnStop");
+const statusBox   = document.getElementById("statusBox");
+const statusResi  = document.getElementById("statusResi");
+const resiText    = document.getElementById("resiText");
+const courierText = document.getElementById("courierText");
+const scanTime    = document.getElementById("scanTime");
 const historyList = document.getElementById("historyList");
 
 /* ===========================================================
-   FUNGSI SUARA BIP (Web Audio API)
+   LOGIN & LOGOUT
    =========================================================== */
+function doLogin() {
+  const user = inputUser.value.trim();
+  const pass = inputPass.value;
 
-// Bip 1x nada TINGGI = resi valid
-function bipValid() {
-  try {
-    const osc  = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.frequency.value = 1000;
-    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
-    osc.start(audioCtx.currentTime);
-    osc.stop(audioCtx.currentTime + 0.15);
-  } catch (e) {}
+  if (user === VALID_USER && pass === VALID_PASS) {
+    loginError.style.display = "none";
+    loginPage.style.display  = "none";
+    mainPage.style.display   = "flex";
+  } else {
+    loginError.style.display = "block";
+    inputPass.value = "";
+    inputPass.focus();
+  }
 }
 
-// Bip 2x nada RENDAH = resi duplicate
-function bipDuplicate() {
-  try {
-    [0, 0.22].forEach((delay) => {
-      const osc  = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.frequency.value = 380;
-      gain.gain.setValueAtTime(0.3, audioCtx.currentTime + delay);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + 0.18);
-      osc.start(audioCtx.currentTime + delay);
-      osc.stop(audioCtx.currentTime + delay + 0.18);
+function doLogout() {
+  // Stop kamera dulu jika aktif
+  if (html5QrCode) {
+    html5QrCode.stop().catch(() => {}).finally(() => {
+      html5QrCode.clear();
+      html5QrCode = null;
+      resetScanState();
     });
-  } catch (e) {}
+  }
+  mainPage.style.display  = "none";
+  loginPage.style.display = "flex";
+  inputUser.value = "";
+  inputPass.value = "";
+}
+
+function resetScanState() {
+  btnStart.disabled = false;
+  btnStop.disabled  = true;
+  setStatus("idle", "📷", "Siap Scan", "");
+  resiText.textContent    = "-";
+  courierText.textContent = "-";
+  scanTime.textContent    = "-";
+}
+
+// Tombol login & logout
+btnLogin.addEventListener("click", doLogin);
+btnLogout.addEventListener("click", doLogout);
+
+// Tekan Enter di field password = login
+inputPass.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") doLogin();
+});
+inputUser.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") inputPass.focus();
+});
+
+/* ===========================================================
+   DETEKSI KURIR DARI PREFIX NOMOR RESI
+   =========================================================== */
+function detectCourier(noResi) {
+  const upper = String(noResi).trim().toUpperCase();
+  for (const c of COURIER_PREFIXES) {
+    if (upper.startsWith(c.prefix)) return c.name;
+  }
+  return "Tidak Dikenali";
 }
 
 /* ===========================================================
-   FUNGSI: MULAI KAMERA SCANNER
+   SUARA BIP — Web Audio API
+   Dibuat baru tiap panggilan agar tidak ada masalah state
+   =========================================================== */
+function playBeep(frequency, duration, times = 1, gap = 0.22) {
+  try {
+    // Buat AudioContext baru tiap kali — paling kompatibel di Android
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    for (let i = 0; i < times; i++) {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = "square"; // square lebih keras & jelas dari sine di speaker HP kecil
+      osc.frequency.value = frequency;
+      const start = ctx.currentTime + i * (duration + gap);
+      gain.gain.setValueAtTime(0.4, start);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+      osc.start(start);
+      osc.stop(start + duration);
+    }
+    // Tutup context setelah semua selesai
+    const totalDuration = times * (duration + gap) + 0.1;
+    setTimeout(() => ctx.close(), totalDuration * 1000);
+  } catch (e) {
+    console.warn("Audio error:", e);
+  }
+}
+
+// Bip 1x nada TINGGI = valid ✅
+function bipValid()     { playBeep(1000, 0.15, 1); }
+
+// Bip 2x nada RENDAH = duplicate ⚠️
+function bipDuplicate() { playBeep(400, 0.18, 2); }
+
+/* ===========================================================
+   KAMERA SCANNER
    =========================================================== */
 function startScanner() {
-  // Unlock Web Audio API saat user tap - wajib ada interaksi user dulu
-  // sebelum browser mobile mengizinkan suara keluar
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  audioCtx.resume();
-
   html5QrCode = new Html5Qrcode("reader");
-
-  const config = {
-    fps: 10,
-    qrbox: { width: 250, height: 150 },
-    aspectRatio: 1.0,
-  };
 
   html5QrCode
     .start(
       { facingMode: "environment" },
-      config,
+      { fps: 10, qrbox: { width: 260, height: 160 } },
       onScanSuccess,
-      onScanFailure
+      () => {} // onScanFailure diabaikan
     )
     .then(() => {
       btnStart.disabled = true;
-      btnStop.disabled = false;
+      btnStop.disabled  = false;
+      setStatus("idle", "📷", "Arahkan ke Barcode", "");
     })
     .catch((err) => {
-      console.error("Gagal memulai kamera:", err);
-      setStatus("error", "❌ Gagal mengakses kamera. Pastikan izin kamera diaktifkan.");
+      console.error(err);
+      setStatus("error", "❌", "Gagal akses kamera", "Pastikan izin kamera aktif");
     });
 }
 
-/* ===========================================================
-   FUNGSI: HENTIKAN KAMERA SCANNER
-   =========================================================== */
 function stopScanner() {
   if (html5QrCode) {
-    html5QrCode
-      .stop()
-      .then(() => {
-        html5QrCode.clear();
-        btnStart.disabled = false;
-        btnStop.disabled = true;
-      })
-      .catch((err) => {
-        console.error("Gagal menghentikan kamera:", err);
-      });
+    html5QrCode.stop().then(() => {
+      html5QrCode.clear();
+      html5QrCode    = null;
+      btnStart.disabled = false;
+      btnStop.disabled  = true;
+      setStatus("idle", "📷", "Siap Scan", "");
+    }).catch(console.error);
   }
 }
 
 /* ===========================================================
-   CALLBACK: DIPANGGIL OTOMATIS SAAT BARCODE/QR BERHASIL DIBACA
+   CALLBACK SCAN BERHASIL
    =========================================================== */
 function onScanSuccess(decodedText) {
   const now = Date.now();
-
   if (
     isProcessing ||
     (decodedText === lastScannedCode && now - lastScannedTime < SCAN_COOLDOWN_MS)
-  ) {
-    return;
-  }
+  ) return;
 
   lastScannedCode = decodedText;
   lastScannedTime = now;
-
   processResi(decodedText);
 }
 
 /* ===========================================================
-   CALLBACK: FRAME GAGAL DIBACA - NORMAL, DIABAIKAN
-   =========================================================== */
-function onScanFailure(error) {}
-
-/* ===========================================================
-   FUNGSI: PROSES NOMOR RESI YANG TERBACA
+   PROSES RESI — cek ke Google Sheets
    =========================================================== */
 async function processResi(noResi) {
   isProcessing = true;
 
-  resiText.textContent = noResi;
+  const kurir         = detectCourier(noResi);
   const waktuSekarang = formatWaktu(new Date());
-  scanTime.textContent = waktuSekarang;
 
-  setStatus("loading", "⏳ Mengecek nomor resi...");
+  // Tampilkan info di kartu info
+  resiText.textContent    = noResi;
+  courierText.textContent = kurir;
+  scanTime.textContent    = waktuSekarang;
+
+  setStatus("loading", "⏳", "Mengecek...", noResi);
 
   try {
     const response = await fetch(APPS_SCRIPT_URL, {
@@ -158,71 +240,69 @@ async function processResi(noResi) {
       body: JSON.stringify({
         action: "checkAndSave",
         noResi: noResi,
-        waktu: waktuSekarang,
+        kurir:  kurir,
+        waktu:  waktuSekarang,
       }),
     });
 
     const result = await response.json();
 
     if (result.status === "valid") {
-      setStatus("valid", "✅ Resi Valid");
-      addHistory(noResi, waktuSekarang, "valid");
-      bipValid();       // 🔊 Bip 1x nada tinggi
+      setStatus("valid", "✅", "Resi Valid", noResi);
+      addHistory(noResi, kurir, waktuSekarang, "valid");
+      bipValid();
 
     } else if (result.status === "duplicate") {
-      setStatus("duplicate", "⚠️ Resi Sudah Pernah Discan");
-      addHistory(noResi, waktuSekarang, "duplicate");
-      bipDuplicate();   // 🔊 Bip 2x nada rendah
+      setStatus("duplicate", "⚠️", "Sudah Pernah Discan", noResi);
+      addHistory(noResi, kurir, waktuSekarang, "duplicate");
+      bipDuplicate();
 
     } else {
-      setStatus("error", "❌ Respon server tidak dikenali.");
+      setStatus("error", "❓", "Respon Tidak Dikenali", "");
     }
+
   } catch (err) {
-    console.error("Gagal menghubungi server:", err);
-    setStatus("error", "❌ Gagal terhubung ke server. Cek koneksi internet.");
+    console.error(err);
+    setStatus("error", "❌", "Gagal ke Server", "Cek koneksi internet");
   } finally {
     isProcessing = false;
   }
 }
 
 /* ===========================================================
-   FUNGSI: UBAH TAMPILAN STATUS BOX
+   UPDATE STATUS BOX
    =========================================================== */
-function setStatus(type, message) {
+function setStatus(type, icon, text, resiInfo) {
   statusBox.className = "status-box status-" + type;
-  statusBox.textContent = message;
+  statusBox.querySelector(".status-icon").textContent = icon;
+  statusBox.querySelector(".status-text").textContent = text;
+  statusResi.textContent = resiInfo || "";
 }
 
 /* ===========================================================
-   FUNGSI: TAMBAHKAN ITEM KE RIWAYAT SCAN
+   TAMBAH RIWAYAT
    =========================================================== */
-function addHistory(noResi, waktu, type) {
+function addHistory(noResi, kurir, waktu, type) {
   const li = document.createElement("li");
-  li.className = type === "valid" ? "history-valid" : "history-duplicate";
-
-  const icon = type === "valid" ? "✅" : "⚠️";
-
+  li.className = type === "valid" ? "h-valid" : "h-duplicate";
   li.innerHTML = `
-    <span>${icon} ${escapeHtml(noResi)}</span>
+    <span class="h-resi">
+      ${type === "valid" ? "✅" : "⚠️"} ${escapeHtml(noResi)}
+      <br><span class="h-courier">${escapeHtml(kurir)}</span>
+    </span>
     <span class="h-time">${waktu}</span>
   `;
-
   historyList.prepend(li);
 }
 
 /* ===========================================================
-   FUNGSI BANTUAN: FORMAT WAKTU
+   UTILITY
    =========================================================== */
-function formatWaktu(dateObj) {
-  const pad = (n) => String(n).padStart(2, "0");
-  const tanggal = `${pad(dateObj.getDate())}/${pad(dateObj.getMonth() + 1)}/${dateObj.getFullYear()}`;
-  const jam = `${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}:${pad(dateObj.getSeconds())}`;
-  return `${tanggal} ${jam}`;
+function formatWaktu(d) {
+  const p = (n) => String(n).padStart(2, "0");
+  return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
-/* ===========================================================
-   FUNGSI BANTUAN: ESCAPE HTML
-   =========================================================== */
 function escapeHtml(text) {
   const div = document.createElement("div");
   div.textContent = text;
@@ -230,12 +310,7 @@ function escapeHtml(text) {
 }
 
 /* ===========================================================
-   EVENT LISTENER TOMBOL
+   EVENT LISTENER KAMERA
    =========================================================== */
 btnStart.addEventListener("click", startScanner);
 btnStop.addEventListener("click", stopScanner);
-
-window.addEventListener("DOMContentLoaded", () => {
-  // Hapus tanda komentar di baris bawah jika ingin auto-start:
-  // startScanner();
-});
