@@ -2,75 +2,91 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <!-- Wajib untuk tampilan responsive di HP -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Scan Resi - Warehouse App</title>
-
-  <!-- File CSS untuk styling -->
+  <title>Scan Resi Paket</title>
   <link rel="stylesheet" href="style.css" />
-
-  <!-- Library html5-qrcode untuk scan barcode/QR via kamera HP -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body>
 
-  <!-- ======================== HEADER ======================== -->
-  <header class="app-header">
-    <h1>📦 Warehouse - Scan Resi</h1>
-  </header>
+  <!-- ======================== HALAMAN LOGIN ======================== -->
+  <div id="loginPage" class="login-page">
+    <div class="login-card">
+      <div class="login-logo">📦</div>
+      <h1 class="login-title">Scan Resi Paket</h1>
+      <p class="login-sub">Masuk untuk melanjutkan</p>
 
-  <main class="app-container">
-
-    <!-- ======================== AREA KAMERA SCANNER ======================== -->
-    <section class="card camera-card">
-      <h2>Area Kamera</h2>
-      <!-- Div ini akan otomatis diisi video kamera oleh library html5-qrcode -->
-      <div id="reader"></div>
-
-      <!-- Tombol untuk start/stop kamera secara manual jika diperlukan -->
-      <div class="camera-controls">
-        <button id="btnStart" class="btn btn-primary">Mulai Kamera</button>
-        <button id="btnStop" class="btn btn-secondary" disabled>Stop Kamera</button>
+      <div class="input-group">
+        <label>Username</label>
+        <input type="text" id="inputUser" placeholder="Username" autocomplete="off" />
       </div>
-    </section>
-
-    <!-- ======================== AREA HASIL SCAN ======================== -->
-    <section class="card result-card">
-      <h2>Hasil Scan</h2>
-      <div class="result-box">
-        <p class="label">Nomor Resi:</p>
-        <p id="resiText" class="resi-value">-</p>
+      <div class="input-group">
+        <label>Password</label>
+        <input type="password" id="inputPass" placeholder="Password" />
       </div>
-      <div class="result-box">
-        <p class="label">Waktu Scan:</p>
-        <p id="scanTime" class="resi-value">-</p>
-      </div>
-    </section>
 
-    <!-- ======================== AREA STATUS VALID/DUPLICATE ======================== -->
-    <section class="card status-card">
-      <h2>Status</h2>
-      <!-- Status akan berubah class & teks via JavaScript -->
+      <div id="loginError" class="login-error" style="display:none">
+        ❌ Username atau password salah
+      </div>
+
+      <button id="btnLogin" class="btn-login">Masuk</button>
+    </div>
+  </div>
+
+  <!-- ======================== HALAMAN UTAMA SCAN ======================== -->
+  <div id="mainPage" class="main-page" style="display:none">
+
+    <!-- HEADER -->
+    <header class="app-header">
+      <span>📦 Scan Resi Paket</span>
+      <button id="btnLogout" class="btn-logout">Keluar</button>
+    </header>
+
+    <main class="app-container">
+
+      <!-- STATUS BESAR DI ATAS (seperti di gambar) -->
       <div id="statusBox" class="status-box status-idle">
-        Menunggu hasil scan...
+        <div class="status-icon">📷</div>
+        <div class="status-text">Siap Scan</div>
+        <div id="statusResi" class="status-resi"></div>
       </div>
-    </section>
 
-    <!-- ======================== AREA RIWAYAT SCAN (LOKAL) ======================== -->
-    <section class="card history-card">
-      <h2>Riwayat Scan (Sesi Ini)</h2>
-      <ul id="historyList" class="history-list">
-        <!-- Item riwayat akan ditambahkan otomatis oleh JavaScript -->
-      </ul>
-    </section>
+      <!-- AREA KAMERA -->
+      <section class="card">
+        <div id="reader"></div>
+        <div class="camera-controls">
+          <button id="btnStart" class="btn btn-primary">▶ Mulai Kamera</button>
+          <button id="btnStop" class="btn btn-danger" disabled>■ Stop</button>
+        </div>
+      </section>
 
-  </main>
+      <!-- INFO HASIL SCAN -->
+      <section class="card info-card">
+        <div class="info-row">
+          <span class="info-label">No. Resi</span>
+          <span id="resiText" class="info-value">-</span>
+        </div>
+        <div class="info-divider"></div>
+        <div class="info-row">
+          <span class="info-label">Jasa Kirim</span>
+          <span id="courierText" class="info-value">-</span>
+        </div>
+        <div class="info-divider"></div>
+        <div class="info-row">
+          <span class="info-label">Waktu Scan</span>
+          <span id="scanTime" class="info-value">-</span>
+        </div>
+      </section>
 
-  <footer class="app-footer">
-    <p>Warehouse Scan Prototype</p>
-  </footer>
+      <!-- RIWAYAT SCAN -->
+      <section class="card">
+        <p class="section-title">Riwayat Sesi Ini</p>
+        <ul id="historyList" class="history-list"></ul>
+      </section>
 
-  <!-- File JavaScript utama -->
+    </main>
+  </div>
+
   <script src="script.js"></script>
 </body>
-</html> 
+</html>
